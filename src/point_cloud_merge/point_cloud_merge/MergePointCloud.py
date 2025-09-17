@@ -11,5 +11,5 @@ class MergePointCloud(Node):
 def main(args = None):
     rclpy.init(args=args)
     node = MergePointCloud()
-	rclpy.spin(node) # This node will be kept alive independently until is killed.
-	rclpy.shutdown() 
+    rclpy.spin(node) # This node will be kept alive independently until is killed.
+    rclpy.shutdown() 
