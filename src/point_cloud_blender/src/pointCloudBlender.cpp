@@ -46,7 +46,7 @@ class PointCloudBlender : public rclcpp:: Node{
             angle = 0;
 
             // Init publish
-            this->publishAngle()
+            this->publishAngle();
         }
 
     private:
