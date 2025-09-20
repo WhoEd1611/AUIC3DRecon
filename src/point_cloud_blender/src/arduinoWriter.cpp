@@ -5,44 +5,29 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <serial/serial.h>
-#include <thread>
-#include <memory>
+#include <boost/asio.hpp>
 
 class ArduinoSerialNode : public rclcpp::Node{
   public: 
   ArduinoSerialNode()
-  : Node("arduino_serial_node")
+  : Node("arduino_serial_node"), serial_(io_)
   {
     // Init arduino communication
-    this->declare_parameter<std::string>("port", "/dev/ttyACM0");
-    this->declare_parameter<int>("baudrate", 9600);
-
-    std::string port = this->get_parameter("port").as_string();
-    int baudrate = this->get_parameter("baudrate").as_int();
-
-    try 
-    {
-      serial_.setPort(port);
-      serial_.setBaudrate(baudrate);
-      serial_.setTimeout(serial::Timeout::simpleTimeout(1000));
-      serial_.open();
-
-      if (serial_.isOpen()) 
-      {
-        RCLCPP_INFO(this->get_logger(), "Connected to Arduino on %s at %d baud", port.c_str(), baudrate);
-      }
-    } 
-    catch (const std::exception &e) 
+    try {
+      serial_.open("/dev/ttyACM0");
+      serial_.set_option(boost::asio::serial_port_base::baud_rate(9600));
+    }
+    catch (boost::system::system_error &e) 
     {
       RCLCPP_ERROR(this->get_logger(), "Could not open serial port: %s", e.what());
+      return;
     }
 
     // Init pub
     stat_pub_ = this->create_publisher<std_msgs::msg::Bool>("motion_bool", 10); // Publishes when arduino finished moving
 
     // Init sub
-    ang_sub_ = this->create_subscription<std_msgs::msg::Int32(
+    ang_sub_ = this->create_subscription<std_msgs::msg::Int32>(
       "angle", 
       10, 
       std::bind(&ArduinoSerialNode::sendToArduino, this, std::placeholders::_1)); // 
@@ -52,34 +37,30 @@ class ArduinoSerialNode : public rclcpp::Node{
     void sendToArduino(const std_msgs::msg::Int32::SharedPtr msg)
     {
       // Send to Arduino angle
-      if (serial_.isOpen()) {
+      if (serial_.is_open()) {
         std::string cmd = msg->data + "\n";
-        serial_.write(cmd);
-        RCLCPP_INFO(this->get_logger(), "Sent to Arduino: %s", msg->data.c_str());
-      }
+        boost::asio::write(serial_,boost::asio::buffer(cmd));
+        RCLCPP_INFO(this->get_logger(), "Arduino messaged");
 
-      // Wait for reply from Arduino
-      try{
-        std::string line;
-        while (rclcpp::ok()) {
-          line = serial_.readline(256, "\n"); // blocking read
-          if (!line.empty()) break;          // exit once we got data
-        }
+        // Wait for reply from Arduino
+        boost::asio::streambuf buf;
+        boost::asio::read_until(serial_, buf, "\n"); // Message recieved
+        
+        // Publish message because finished moving
+        std_msgs::msg::Bool status;
+        status.data = true; // Publish Bool
+        stat_pub_->publish(status);
       }
-      
-      // Publish message because finished moving
-      std_msgs::msg::Bool status;
-      status.data = True;
-      stat_pub_.publish(status)
     }
 
-    serial::Serial serial_;
+    boost::asio::io_service io_;
+    boost::asio::serial_port serial_;
 
     // Publishers
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr stat_pub_;
     
     // Subscribers
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr ang_sub_;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr ang_sub_;
 };
 
 
