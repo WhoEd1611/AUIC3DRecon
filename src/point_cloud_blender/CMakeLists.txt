@@ -32,9 +32,19 @@ target_link_libraries(pointCloudBlender
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+add_executable(mergeNode src/mergeNode.cpp)
+ament_target_dependencies(mergeNode rclcpp std_msgs sensor_msgs message_filters pcl_conversions Eigen3)
+target_link_libraries(mergeNode
+  ${PCL_LIBRARIES}
+  Boost::system
+  Boost::filesystem
+  Boost::thread
+)
+
 install(TARGETS
   arduinoWriter
   pointCloudBlender
+  mergeNode
   DESTINATION lib/${PROJECT_NAME}
 )
 
