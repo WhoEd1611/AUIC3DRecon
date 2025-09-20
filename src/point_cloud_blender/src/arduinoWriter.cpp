@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <std_msgs/msg/int32.hpp>
 
 #include <rclcpp/rclcpp.hpp>
@@ -12,6 +12,8 @@ class ArduinoSerialNode : public rclcpp::Node{
   ArduinoSerialNode()
   : Node("arduino_serial_node"), serial_(io_)
   {
+    this->declare_parameter("use_sim_time", false);  // default system time
+    bool use_sim_time = this->get_parameter("use_sim_time").as_bool();
     // Init arduino communication
     try {
       serial_.open("/dev/ttyACM0");
@@ -24,7 +26,7 @@ class ArduinoSerialNode : public rclcpp::Node{
     }
 
     // Init pub
-    stat_pub_ = this->create_publisher<std_msgs::msg::Bool>("motion_bool", 10); // Publishes when arduino finished moving
+    stat_pub_ = this->create_publisher<std_msgs::msg::Header>("motion_bool", 10); // Publishes when arduino finished moving
 
     // Init sub
     ang_sub_ = this->create_subscription<std_msgs::msg::Int32>(
@@ -47,8 +49,9 @@ class ArduinoSerialNode : public rclcpp::Node{
         boost::asio::read_until(serial_, buf, "\n"); // Message recieved
         
         // Publish message because finished moving
-        std_msgs::msg::Bool status;
-        status.data = true; // Publish Bool
+        std_msgs::msg::Header status;
+        status.stamp = this->now();
+        status.frame_id = "1"; // Publish Bool
         stat_pub_->publish(status);
         RCLCPP_INFO(this->get_logger(), "Arduino finished moving");
       }
@@ -58,7 +61,7 @@ class ArduinoSerialNode : public rclcpp::Node{
     boost::asio::serial_port serial_;
 
     // Publishers
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr stat_pub_;
+    rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr stat_pub_;
     
     // Subscribers
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr ang_sub_;
