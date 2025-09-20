@@ -7,17 +7,36 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread)
+find_package(PCL REQUIRED COMPONENTS common filters)
 
-add_executable(point_cloud_blender src/arduinoWriter.cpp)
-target_include_directories(point_cloud_blender PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(point_cloud_blender ${Boost_LIBRARIES})
-ament_target_dependencies(point_cloud_blender rclcpp std_msgs)
+add_executable(arduinoWriter src/arduinoWriter.cpp)
+ament_target_dependencies(arduinoWriter rclcpp std_msgs)
+target_link_libraries(arduinoWriter
+  Boost::system
+  Boost::filesystem
+  Boost::thread
+)
 
+add_executable(pointCloudBlender src/pointCloudBlender.cpp)
+ament_target_dependencies(pointCloudBlender rclcpp std_msgs sensor_msgs message_filters pcl_conversions Eigen3)
+target_link_libraries(pointCloudBlender
+  ${PCL_LIBRARIES}
+)
+include_directories(${PCL_INCLUDE_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+install(TARGETS
+  arduinoWriter
+  pointCloudBlender
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
