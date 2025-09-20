@@ -1,6 +1,0 @@
-Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/edric/AUIC3DRecon/src/point_cloud_blender -DCMAKE_INSTALL_PREFIX=/home/edric/AUIC3DRecon/install/point_cloud_blender
-Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/edric/AUIC3DRecon/src/point_cloud_blender -DCMAKE_INSTALL_PREFIX=/home/edric/AUIC3DRecon/install/point_cloud_blender
-Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/edric/AUIC3DRecon/build/point_cloud_blender -- -j12 -l12
-Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/edric/AUIC3DRecon/build/point_cloud_blender -- -j12 -l12
-Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/edric/AUIC3DRecon/build/point_cloud_blender
-Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/edric/AUIC3DRecon/build/point_cloud_blender
