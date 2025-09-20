@@ -1,0 +1,42 @@
+[0.016s] Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/edric/AUIC3DRecon/src/point_cloud_blender -DCMAKE_INSTALL_PREFIX=/home/edric/AUIC3DRecon/install/point_cloud_blender
+[0.150s] -- The C compiler identification is GNU 11.4.0
+[0.702s] -- The CXX compiler identification is GNU 11.4.0
+[1.115s] -- Detecting C compiler ABI info
+[1.281s] -- Detecting C compiler ABI info - done
+[1.289s] -- Check for working C compiler: /usr/bin/cc - skipped
+[1.289s] -- Detecting C compile features
+[1.289s] -- Detecting C compile features - done
+[1.292s] -- Detecting CXX compiler ABI info
+[1.457s] -- Detecting CXX compiler ABI info - done
+[1.465s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[1.465s] -- Detecting CXX compile features
+[1.466s] -- Detecting CXX compile features - done
+[1.468s] -- Found ament_cmake: 1.3.12 (/opt/ros/humble/share/ament_cmake/cmake)
+[1.614s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[1.700s] -- Found ament_lint_auto: 0.12.14 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.775s] -- Added test 'lint_cmake' to check CMake code style
+[1.776s] -- Added test 'xmllint' to check XML markup files
+[1.778s] -- Configuring done
+[1.782s] -- Generating done
+[1.784s] -- Build files have been written to: /home/edric/AUIC3DRecon/build/point_cloud_blender
+[1.790s] Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/edric/AUIC3DRecon/src/point_cloud_blender -DCMAKE_INSTALL_PREFIX=/home/edric/AUIC3DRecon/install/point_cloud_blender
+[1.791s] Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/edric/AUIC3DRecon/build/point_cloud_blender -- -j12 -l12
+[1.828s] Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/edric/AUIC3DRecon/build/point_cloud_blender -- -j12 -l12
+[1.839s] Invoking command in '/home/edric/AUIC3DRecon/build/point_cloud_blender': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/edric/AUIC3DRecon/build/point_cloud_blender
+[1.846s] -- Install configuration: ""
+[1.847s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/ament_index/resource_index/package_run_dependencies/point_cloud_blender
+[1.848s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/ament_index/resource_index/parent_prefix_path/point_cloud_blender
+[1.848s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/environment/ament_prefix_path.sh
+[1.848s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/environment/ament_prefix_path.dsv
+[1.848s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/environment/path.sh
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/environment/path.dsv
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/local_setup.bash
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/local_setup.sh
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/local_setup.zsh
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/local_setup.dsv
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/package.dsv
+[1.849s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/ament_index/resource_index/packages/point_cloud_blender
+[1.850s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/cmake/point_cloud_blenderConfig.cmake
+[1.850s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/cmake/point_cloud_blenderConfig-version.cmake
+[1.850s] -- Installing: /home/edric/AUIC3DRecon/install/point_cloud_blender/share/point_cloud_blender/package.xml
+[1.853s] Invoked command in '/home/edric/AUIC3DRecon/build/point_cloud_blender' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/edric/AUIC3DRecon/build/point_cloud_blender
