@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/header.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -49,14 +49,18 @@ class PointCloudBlender : public rclcpp:: Node{
             this->publishAngle();
         }
 
-        void confirmAngle(const std_msgs::msg::Bool::ConstSharedPtr bool_msg,  
+        void confirmAngle(const std_msgs::msg::Header::ConstSharedPtr bool_msg,  
                           const sensor_msgs::msg::PointCloud2::ConstSharedPtr pc_msg)
         {
-            if (bool_msg->data) {
+            RCLCPP_INFO(this->get_logger(), "Message Recieved");
+
+            if (bool_msg->frame_id == "1") {
                 // Get point cloud
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
                 pcl::fromROSMsg(*pc_msg, *cloud);
                 if (memoryCloud->empty()){
+                    Eigen::Matrix4f t_matrix = calcTransform(angle, 0);
+
                     // Default as first cloud
                     *memoryCloud = *cloud;
                 }
@@ -112,17 +116,19 @@ class PointCloudBlender : public rclcpp:: Node{
         {
             auto message = sensor_msgs::msg::PointCloud2();
             pcl::toROSMsg(*memoryCloud, message);
+            message.header.stamp = this->now();       // sets consistent timestamp
+            message.header.frame_id = "map"; 
             RCLCPP_INFO(this->get_logger(), "Cloud updated");
             pc_pub_->publish(message);
         }
         
         Eigen::Matrix4f calcTransform(int phi, int gamma)
         {
-            // Get rotation matrix
-            Eigen::Matrix3f R0;
-            R0 << 1, 0, 0,
-                0, cos(-1*gamma), -sin(-1*gamma),
-                0, sin(-1*gamma), cos(-1*gamma);
+            // // Get rotation matrix
+            // Eigen::Matrix3f R0;
+            // R0 << 1, 0, 0,
+            //     0, cos(-1*gamma), -sin(-1*gamma),
+            //     0, sin(-1*gamma), cos(-1*gamma);
 
             Eigen::Matrix3f R1;
             R1 << cos(phi), 0, sin(phi),
@@ -134,7 +140,7 @@ class PointCloudBlender : public rclcpp:: Node{
                 sin(gamma), cos(gamma), 0,
                 0, 0, 1;
 
-            Eigen::Matrix3f R = R2 * R1 * R0;
+            Eigen::Matrix3f R = R1 * R2;
             
             // Get transform matrix
             Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
@@ -148,12 +154,12 @@ class PointCloudBlender : public rclcpp:: Node{
         rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pc_pub_;
 
         // Subscribers
-        message_filters::Subscriber<std_msgs::msg::Bool> bool_sub_;
+        message_filters::Subscriber<std_msgs::msg::Header> bool_sub_;
         message_filters::Subscriber<sensor_msgs::msg::PointCloud2> pc_sub_;
 
         // Synchronizer
         typedef message_filters::sync_policies::ApproximateTime<
-            std_msgs::msg::Bool,
+            std_msgs::msg::Header,
             sensor_msgs::msg::PointCloud2
         > SyncPolicy;
 
