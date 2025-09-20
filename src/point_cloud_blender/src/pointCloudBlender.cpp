@@ -23,29 +23,29 @@ class PointCloudBlender : public rclcpp:: Node{
         PointCloudBlender()
         : Node("pc_blender"), angle(0)
         {
-        publisher_ = this->create_publisher<std_msgs::msg::String>("angle", 10);
+        ang_pub_ = this->create_publisher<std_msgs::msg::Int32>("angle", 10);
+        pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("merge_pc", 10);
         bool_sub_.subscribe(this, "motion_bool");
         pc_sub_.subscribe(this, "camera/image_raw");
 
-        sync_ = std::make_shared<Sync>(
+        sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
             SyncPolicy(10), bool_sub_, pc_sub_);
 
         // Register callback
-        sync_->registerCallback(std::bind(&SyncNode::confirmAngle, this, _1, _2));
+        sync_->registerCallback(std::bind(&PointCloudBlender::confirmAngle, this, _1, _2));
 
         // Init direction, angle and point cloud
         dirFlag = 1;
-        angle = 0
-        
+        angle = 0;
         }
 
     private:
         void publishAngle()
         {
-        auto message = std_msgs::msg::Int32();
-        message.data = angle;
-        RCLCPP_INFO(this->get_logger(), "Angle: '%s'", message.data.c_str());
-        publisher_->publish(message);
+            auto message = std_msgs::msg::Int32();
+            message.data = angle;
+            RCLCPP_INFO(this->get_logger(), "Angle: '%f'", angle);
+            ang_pub_->publish(message);
         }
 
         void confirmAngle(const std_msgs::msg::Bool::SharedPtr bool_msg,  
@@ -62,7 +62,10 @@ class PointCloudBlender : public rclcpp:: Node{
                 {
                 // Transform new point cloud
                 // Merge point clouds together
+                // Publish point cloud
+                this->publishCloud();
                 }
+                
                 // Publish new angle
                 if (angle >= 180){
                     dirFlag = -1;
@@ -72,13 +75,14 @@ class PointCloudBlender : public rclcpp:: Node{
                 }
                 
                 angle = angle + dirFlag * 30;
-
+                
                 this->publishAngle();
             }
 
         };
         // Publishers
-        rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+        rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr ang_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pc_pub_;
 
         // Subscribers
         message_filters::Subscriber<std_msgs::msg::Bool> bool_sub_;
