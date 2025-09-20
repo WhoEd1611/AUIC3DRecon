@@ -49,8 +49,8 @@ class PointCloudBlender : public rclcpp:: Node{
             this->publishAngle();
         }
 
-        void confirmAngle(const std_msgs::msg::Header::ConstSharedPtr bool_msg,  
-                          const sensor_msgs::msg::PointCloud2::ConstSharedPtr pc_msg)
+        void confirmAngle(const std_msgs::msg::Header::ConstSharedPtr &bool_msg,  
+                          const sensor_msgs::msg::PointCloud2::ConstSharedPtr &pc_msg)
         {
             RCLCPP_INFO(this->get_logger(), "Message Recieved");
 
