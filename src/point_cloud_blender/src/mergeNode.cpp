@@ -17,6 +17,7 @@
 
 using std::placeholders::_1;
 using std::placeholders::_2;
+using namespace std::chrono_literals;
 
 class ControlBlender : public rclcpp:: Node{
     public:
@@ -42,13 +43,22 @@ class ControlBlender : public rclcpp:: Node{
             pc_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
                 "camera/camera/depth/color/points", 10, std::bind(&ControlBlender::blendPC, this, _1));
 
+            // Init timer
+            timer_ = this->create_wall_timer(200ms, std::bind(&ControlBlender::publishCloud, this));
+            
             // Init direction, angle and point cloud
             dirFlag = 1;
             angle = 0;
+            memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+
+            // Delay init so arduino can init
+            rclcpp::Rate rate(1); // 1 Hz = 1 second per cycle
+            RCLCPP_INFO(this->get_logger(), "Sleeping for 1 second...");
+            rate.sleep(); // pauses for 1 second
         }
 
     private:
-        void blendPC(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &pc_msg)
+        void blendPC(const sensor_msgs::msg::PointCloud2::ConstSharedPtr pc_msg)
         {
             if (captFlag) // Means only when we want to take photos will we update the PC
             {
@@ -56,22 +66,22 @@ class ControlBlender : public rclcpp:: Node{
                 RCLCPP_INFO(this->get_logger(), "PC Received");
                 
                 // Get point cloud
-                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
                 pcl::fromROSMsg(*pc_msg, *cloud);
-                pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud;
+                pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
                 if (memoryCloud->empty()){
-                    Eigen::Matrix4f t_matrix = calcTransform(angle, 0);
+                    RCLCPP_INFO(this->get_logger(), "PC Initialised");
+                    Eigen::Matrix4f t_matrix = this->calcTransform(angle, 0);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
                     *memoryCloud = *cloud;
-                    RCLCPP_INFO(this->get_logger(), "PC Initialised");
                 }
 
                 else
                 {
                     // Transform new point cloud
-                    Eigen::Matrix4f t_matrix = calcTransform(angle, 30);
+                    Eigen::Matrix4f t_matrix = this->calcTransform(angle, 30);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
 
                     // Add new point cloud to old point cloud
@@ -80,22 +90,19 @@ class ControlBlender : public rclcpp:: Node{
                     // Filter cloud
                     pcl::VoxelGrid<pcl::PointXYZ> voxel;
                     voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 1cm voxels
+                    voxel.setLeafSize(0.05f, 0.05f, 0.05f); // 10cm voxels
 
                     pcl::PointCloud<pcl::PointXYZ>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZ>); // temp filtered cloud
                     voxel.filter(*filterCloud);
                     memoryCloud = filterCloud; // Replace with new cloud
                 }
-                // Publish point cloud
-                this->publishCloud();
 
                 // Send new angle to Arduino, needs to be blocking
                 this->publishAngle();
-            }
-            else 
-            {   
-                // Publish point cloud
-                this->publishCloud();
+
+                while (!captFlag){
+                    ;
+                }
             }
         }
 
@@ -111,17 +118,40 @@ class ControlBlender : public rclcpp:: Node{
                 else if (angle <= 0) {
                     dirFlag = 1;
                 }
-                
+
                 angle = angle + dirFlag * 30;
+                RCLCPP_INFO(this->get_logger(), "Angle: %d", angle);
+                
                 boost::asio::write(serial_, boost::asio::buffer(&angle, sizeof(angle)));
                 RCLCPP_INFO(this->get_logger(), "Arduino messaged");
 
-                // Wait for reply from Arduino
-                boost::asio::streambuf buf;
-                boost::asio::read_until(serial_, buf, "\n"); // Message recieved
+                // // Wait for reply from Arduino
+                // boost::asio::streambuf buf;
+                // std::string line;
+                // while (true)
+                // {
+                //     boost::asio::read_until(serial_, buf, "\n"); // Message recieved
+                //     std::istream is(&buf);
+                //     std::getline(is, line);
+
+                //     // Trim leading/trailing whitespace
+                //     line.erase(line.begin(), std::find_if(line.begin(), line.end(), [](int ch){ return !std::isspace(ch); }));
+                //     line.erase(std::find_if(line.rbegin(), line.rend(), [](int ch){ return !std::isspace(ch); }).base(), line.end());
+
+                //     RCLCPP_INFO(this->get_logger(), "Monitor: %s", line.c_str());
+
+                //     if (line == "CMD: 1") 
+                //     {
+                //         // Toogle boolean message because finished moving
+                //         RCLCPP_INFO(this->get_logger(), "Arduino finished moving");
+                //         captFlag = true;
                 
-                // Toogle boolean message because finished moving
-                RCLCPP_INFO(this->get_logger(), "Arduino finished moving");
+                //     }
+                // }     
+
+                // Delay init so arduino can init
+                rclcpp::Rate rate(1); // 1 Hz = 1 second per cycl
+                rate.sleep(); // pauses for 0.5 second
                 captFlag = true;
             }
         }
@@ -134,6 +164,7 @@ class ControlBlender : public rclcpp:: Node{
             message.header.frame_id = "map"; 
             RCLCPP_INFO(this->get_logger(), "Cloud updated");
             pc_pub_->publish(message);
+            
         }
         
         Eigen::Matrix4f calcTransform(int phi, int gamma)
@@ -169,6 +200,9 @@ class ControlBlender : public rclcpp:: Node{
         // Subscribers
         rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pc_sub_;
         
+        // Timer
+        rclcpp::TimerBase::SharedPtr timer_;
+
         // Serial
         boost::asio::io_service io_;
         boost::asio::serial_port serial_;
@@ -178,13 +212,22 @@ class ControlBlender : public rclcpp:: Node{
         pcl::PointCloud<pcl::PointXYZ>::Ptr memoryCloud;
         int dirFlag;
         bool captFlag = true;
+
+        // Multithread
+        std::mutex pcl_mutex_;
     };
 
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<ControlBlender>();
-    rclcpp::spin(node);
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node);
+    
+    executor.spin();
+    executor.remove_node(node);
+    node.reset();  // destroy shared_ptr
     rclcpp::shutdown();
     return 0;
 }
