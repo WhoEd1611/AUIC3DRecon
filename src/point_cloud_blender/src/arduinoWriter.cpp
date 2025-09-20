@@ -50,6 +50,7 @@ class ArduinoSerialNode : public rclcpp::Node{
         std_msgs::msg::Bool status;
         status.data = true; // Publish Bool
         stat_pub_->publish(status);
+        RCLCPP_INFO(this->get_logger(), "Arduino finished moving");
       }
     }
 
