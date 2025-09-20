@@ -15,7 +15,7 @@ class ArduinoSerialNode : public rclcpp::Node{
   : Node("arduino_serial_node")
   {
     // Init arduino communication
-    this->declare_parameter<std::string>("port", "/dev/ttyUSB0");
+    this->declare_parameter<std::string>("port", "/dev/ttyACM0");
     this->declare_parameter<int>("baudrate", 9600);
 
     std::string port = this->get_parameter("port").as_string();
