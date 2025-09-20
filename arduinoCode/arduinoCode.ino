@@ -20,8 +20,8 @@ void loop() {
     if (angle != lastAngle) {
       myServo.write(angle);
       lastAngle = angle;
-      Serial.print("Moved to: ");
-      Serial.println(angle);
+      delay(250);
+      Serial.println("Finished moving");
     }
   }
 }
