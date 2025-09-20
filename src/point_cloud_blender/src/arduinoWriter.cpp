@@ -21,16 +21,20 @@ class ArduinoSerialNode : public rclcpp::Node{
     std::string port = this->get_parameter("port").as_string();
     int baudrate = this->get_parameter("baudrate").as_int();
 
-    try {
+    try 
+    {
       serial_.setPort(port);
       serial_.setBaudrate(baudrate);
       serial_.setTimeout(serial::Timeout::simpleTimeout(1000));
       serial_.open();
 
-      if (serial_.isOpen()) {
+      if (serial_.isOpen()) 
+      {
         RCLCPP_INFO(this->get_logger(), "Connected to Arduino on %s at %d baud", port.c_str(), baudrate);
       }
-    } catch (const std::exception &e) {
+    } 
+    catch (const std::exception &e) 
+    {
       RCLCPP_ERROR(this->get_logger(), "Could not open serial port: %s", e.what());
     }
 
