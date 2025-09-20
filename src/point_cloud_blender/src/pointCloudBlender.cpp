@@ -49,24 +49,7 @@ class PointCloudBlender : public rclcpp:: Node{
             this->publishAngle();
         }
 
-    private:
-        void publishAngle()
-        {
-            auto message = std_msgs::msg::Int32();
-            message.data = angle;
-            RCLCPP_INFO(this->get_logger(), "Angle: '%f'", angle);
-            ang_pub_->publish(message);
-        }
-
-        void publishCloud()
-        {
-            auto message = sensor_msgs::msg::PointCloud2();
-            pcl::toROSMsg(*memoryCloud, message);
-            RCLCPP_INFO(this->get_logger(), "Cloud updated");
-            pc_pub_->publish(message);
-        }
-
-        void confirmAngle(const std_msgs::msg::Bool::SharedPtr bool_msg,  
+        void confirmAngle(const std_msgs::msg::Bool::ConstSharedPtr bool_msg,  
                           const sensor_msgs::msg::PointCloud2::ConstSharedPtr pc_msg)
         {
             if (bool_msg->data) {
@@ -115,6 +98,23 @@ class PointCloudBlender : public rclcpp:: Node{
             }
 
         };
+
+    private:
+        void publishAngle()
+        {
+            auto message = std_msgs::msg::Int32();
+            message.data = angle;
+            RCLCPP_INFO(this->get_logger(), "Angle Published");
+            ang_pub_->publish(message);
+        }
+
+        void publishCloud()
+        {
+            auto message = sensor_msgs::msg::PointCloud2();
+            pcl::toROSMsg(*memoryCloud, message);
+            RCLCPP_INFO(this->get_logger(), "Cloud updated");
+            pc_pub_->publish(message);
+        }
         
         Eigen::Matrix4f calcTransform(int phi, int gamma)
         {
@@ -153,8 +153,9 @@ class PointCloudBlender : public rclcpp:: Node{
 
         // Synchronizer
         typedef message_filters::sync_policies::ApproximateTime<
-        std_msgs::msg::Bool,
-        sensor_msgs::msg::PointCloud2> SyncPolicy;
+            std_msgs::msg::Bool,
+            sensor_msgs::msg::PointCloud2
+        > SyncPolicy;
 
         std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
         
