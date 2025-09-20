@@ -40,6 +40,8 @@ target_link_libraries(mergeNode
   Boost::filesystem
   Boost::thread
 )
+include_directories(${PCL_INCLUDE_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 install(TARGETS
   arduinoWriter
