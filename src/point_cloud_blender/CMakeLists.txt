@@ -11,6 +11,14 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+find_package(Boost REQUIRED COMPONENTS system)
+
+add_executable(point_cloud_blender src/arduinoWriter.cpp)
+target_include_directories(point_cloud_blender PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(point_cloud_blender ${Boost_LIBRARIES})
+ament_target_dependencies(point_cloud_blender rclcpp std_msgs)
+
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
