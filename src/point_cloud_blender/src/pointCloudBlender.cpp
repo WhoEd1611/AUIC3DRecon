@@ -58,16 +58,17 @@ class PointCloudBlender : public rclcpp:: Node{
                 // Get point cloud
                 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
                 pcl::fromROSMsg(*pc_msg, *cloud);
+                pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud;
+
                 if (memoryCloud->empty()){
                     Eigen::Matrix4f t_matrix = calcTransform(angle, 0);
-
+                    pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
                     *memoryCloud = *cloud;
                 }
                 else
                 {
                     // Transform new point cloud
-                    pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud;
                     Eigen::Matrix4f t_matrix = calcTransform(angle, 30);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
 
