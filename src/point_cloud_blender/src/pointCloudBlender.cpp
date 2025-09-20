@@ -28,7 +28,6 @@ class PointCloudBlender : public rclcpp:: Node{
         : Node("pc_blender")
         {
             this->declare_parameter("use_sim_time", false);  // default system time
-            bool use_sim_time = this->get_parameter("use_sim_time").as_bool();
             
             // Init pub
             ang_pub_ = this->create_publisher<std_msgs::msg::Int32>("angle", 10);

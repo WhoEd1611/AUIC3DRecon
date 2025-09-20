@@ -13,7 +13,6 @@ class ArduinoSerialNode : public rclcpp::Node{
   : Node("arduino_serial_node"), serial_(io_)
   {
     this->declare_parameter("use_sim_time", false);  // default system time
-    bool use_sim_time = this->get_parameter("use_sim_time").as_bool();
     // Init arduino communication
     try {
       serial_.open("/dev/ttyACM0");
