@@ -40,7 +40,7 @@ class PointCloudBlender : public rclcpp:: Node{
             dirFlag = 1;
             angle = 0;
             captFlag = true;
-            memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+            memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
             initFlag = true;
 
 
@@ -65,9 +65,9 @@ class PointCloudBlender : public rclcpp:: Node{
                 RCLCPP_INFO(this->get_logger(), "PCL Received");
                 
                 // Get point cloud
-                pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+                pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
                 pcl::fromROSMsg(*pc_msg, *cloud);
-                pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+                pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
 
                 if (initFlag){
                     RCLCPP_INFO(this->get_logger(), "PC Initialised");
@@ -88,11 +88,11 @@ class PointCloudBlender : public rclcpp:: Node{
                     *memoryCloud = *memoryCloud + *trans_cloud;
 
                     // Filter cloud
-                    pcl::VoxelGrid<pcl::PointXYZ> voxel;
+                    pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
                     voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.05f, 0.05f, 0.05f); // 5cm voxels
+                    voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 5cm voxels
 
-                    pcl::PointCloud<pcl::PointXYZ>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZ>); // temp filtered cloud
+                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
                     voxel.filter(*filterCloud);
                     *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
@@ -168,7 +168,7 @@ class PointCloudBlender : public rclcpp:: Node{
         
         // Constant
         int angle;
-        pcl::PointCloud<pcl::PointXYZ>::Ptr memoryCloud;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr memoryCloud;
         int dirFlag;
         bool captFlag;
         int initFlag;
