@@ -98,7 +98,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Filter cloud
                     pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
                     voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.005f, 0.005f, 0.005f); // 5cm voxels
+                    voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 5cm voxels
 
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
                     voxel.filter(*filterCloud);
