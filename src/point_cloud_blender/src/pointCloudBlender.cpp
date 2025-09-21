@@ -34,13 +34,14 @@ class PointCloudBlender : public rclcpp:: Node{
             pc_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>("camera/camera/depth/color/points", 10, std::bind(&PointCloudBlender::updatePCL, this, _1));
 
             // Init timer
-            timer_ = this->create_wall_timer(200ms, std::bind(&PointCloudBlender::publishCloud, this));
+            timer_ = this->create_wall_timer(1s, std::bind(&PointCloudBlender::publishCloud, this));
 
             // Init direction, angle and point cloud
             dirFlag = 1;
             angle = 0;
-            captFlag = false;
+            captFlag = true;
             memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+            initFlag = true;
 
 
             // Init publish angle to force rotation there
@@ -68,12 +69,13 @@ class PointCloudBlender : public rclcpp:: Node{
                 pcl::fromROSMsg(*pc_msg, *cloud);
                 pcl::PointCloud<pcl::PointXYZ>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
-                if (memoryCloud->empty()){
+                if (initFlag){
                     RCLCPP_INFO(this->get_logger(), "PC Initialised");
                     Eigen::Matrix4f t_matrix = this->calcTransform(angle, 0);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
                     *memoryCloud = *cloud;
+                    initFlag = false;
                 }
 
                 else
@@ -93,6 +95,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     pcl::PointCloud<pcl::PointXYZ>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZ>); // temp filtered cloud
                     voxel.filter(*filterCloud);
                     memoryCloud = filterCloud; // Replace with new cloud
+                    RCLCPP_INFO(this->get_logger(), "Cloud updated");
                 }
 
                 // Update direction of rotation
@@ -116,8 +119,6 @@ class PointCloudBlender : public rclcpp:: Node{
             message.data = angle;
             RCLCPP_INFO(this->get_logger(), "Angle Published");
             ang_pub_->publish(message);
-
-            captFlag = true;
         }
 
         void publishCloud()
@@ -126,7 +127,7 @@ class PointCloudBlender : public rclcpp:: Node{
             pcl::toROSMsg(*memoryCloud, message);
             message.header.stamp = this->now();       // sets consistent timestamp
             message.header.frame_id = "map"; 
-            RCLCPP_INFO(this->get_logger(), "Cloud updated");
+            RCLCPP_INFO(this->get_logger(), "Cloud sent");
             pc_pub_->publish(message);
         }
         
@@ -170,6 +171,7 @@ class PointCloudBlender : public rclcpp:: Node{
         pcl::PointCloud<pcl::PointXYZ>::Ptr memoryCloud;
         int dirFlag;
         bool captFlag;
+        int initFlag;
 
         // Timer
         rclcpp::TimerBase::SharedPtr timer_;
