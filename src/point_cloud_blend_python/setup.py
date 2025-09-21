@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'arduino_serial_com'
+package_name = 'point_cloud_blend_python'
 
 setup(
     name=package_name,
