@@ -75,7 +75,7 @@ class PointCloudBlender : public rclcpp:: Node{
 
                 if (initFlag){
                     RCLCPP_INFO(this->get_logger(), "PC Initialised");
-                    Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, prevAng);
+                    Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, 0);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
                     *memoryCloud = *trans_cloud;
