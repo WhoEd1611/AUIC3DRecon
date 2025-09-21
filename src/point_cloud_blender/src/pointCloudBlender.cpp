@@ -42,7 +42,9 @@ class PointCloudBlender : public rclcpp:: Node{
             captFlag = true;
             memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
             initFlag = true;
-
+            offsetAng = 45;
+            dAng = 30;
+            prevAng = 0;
 
             // Init publish angle to force rotation there
             this->publishAngle();
@@ -53,6 +55,7 @@ class PointCloudBlender : public rclcpp:: Node{
         {
             if (bool_msg->frame_id == "1")
             {
+                RCLCPP_INFO(this->get_logger(), "Angle updated");
                 captFlag = true;
             }
         }
@@ -71,17 +74,17 @@ class PointCloudBlender : public rclcpp:: Node{
 
                 if (initFlag){
                     RCLCPP_INFO(this->get_logger(), "PC Initialised");
-                    Eigen::Matrix4f t_matrix = this->calcTransform(angle, 0);
+                    Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, prevAng);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
-                    *memoryCloud = *cloud;
+                    *memoryCloud = *trans_cloud;
                     initFlag = false;
                 }
 
                 else
                 {
                     // Transform new point cloud
-                    Eigen::Matrix4f t_matrix = this->calcTransform(angle, 30);
+                    Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, prevAng);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
 
                     // Add new point cloud to old point cloud
@@ -90,7 +93,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Filter cloud
                     pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
                     voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 5cm voxels
+                    voxel.setLeafSize(0.005f, 0.005f, 0.005f); // 5cm voxels
 
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
                     voxel.filter(*filterCloud);
@@ -101,14 +104,14 @@ class PointCloudBlender : public rclcpp:: Node{
 
                 // Update direction of rotation
                 if (angle >= 180){
-                    dirFlag = -1;
+                    prevAng = 180;
+                    angle = 0;
                 }
-                else if (angle <= 0) {
-                    dirFlag = 1;
+                else {
+                    // Update new angle
+                    prevAng = angle;
+                    angle = angle + dAng;
                 }
-
-                // Update new angle
-                angle = angle + dirFlag * 30;
                 // Send new angle to Arduino, needs to be blocking
                 this->publishAngle();
             }
@@ -127,37 +130,61 @@ class PointCloudBlender : public rclcpp:: Node{
             auto message = sensor_msgs::msg::PointCloud2();
             pcl::toROSMsg(*memoryCloud, message);
             message.header.stamp = this->now();       // sets consistent timestamp
-            message.header.frame_id = "camera_link"; 
+            message.header.frame_id = "camera_depth_optical_frame"; 
             RCLCPP_INFO(this->get_logger(), "Cloud sent");
             pc_pub_->publish(message);
         }
         
-        Eigen::Matrix4f calcTransform(int phi, int gamma)
+        Eigen::Matrix4f calcTransform(int phi_deg, int gamma_deg)
         {
-            // // Get rotation matrix
-            // Eigen::Matrix3f R0;
-            // R0 << 1, 0, 0,
-            //     0, cos(-1*gamma), -sin(-1*gamma),
-            //     0, sin(-1*gamma), cos(-1*gamma);
+            float phi = phi_deg * M_PI / 180.0f;    // pitch
+            float gamma = gamma_deg * M_PI / 180.0f; // yaw / rotation around axis
 
-            Eigen::Matrix3f R1;
-            R1 << cos(phi), 0, sin(phi),
-                0, 1, 0,
-                -sin(phi), 0, cos(phi);
+            // Rotation around camera x-axis (pitch)
+            Eigen::Matrix3f Rx;
+            Rx << 1, 0, 0,
+                0, cos(phi), -sin(phi),
+                0, sin(phi), cos(phi);
 
-            Eigen::Matrix3f R2;
-            R2 << cos(gamma), -sin(gamma), 0,
-                sin(gamma), cos(gamma), 0,
-                0, 0, 1;
+            // Rotation around z-axis (gamma)
+            Eigen::Matrix3f Rz;
+            Rz << cos(gamma), -sin(gamma), 0,
+                sin(gamma),  cos(gamma), 0,
+                0,           0,          1;
 
-            Eigen::Matrix3f R = R2 * R1;
-            
-            // Get transform matrix
-            Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
-            transform.block<3,3>(0,0) = R;
+            // Optional flips if using optical frame conventions
+            Eigen::Matrix3f Rzneg;
+            Rzneg << 1, 0, 0,
+                    0, 1, 0,
+                    0, 0,-1;
+
+            Eigen::Matrix3f Ryneg;
+            Ryneg << 1, 0, 0,
+                    0,-1, 0,
+                    0, 0, 1;
+
+            // Total rotation
+            Eigen::Matrix3f R = Rz * Ryneg * Rzneg * Rx;
+            Eigen::Matrix4f T1 = Eigen::Matrix4f::Identity();
+            T1.block<3,3>(0,0) = R; 
+
+            // Offset from rotation axis (3 cm along X)
+            Eigen::Vector3f offsetp(0.03f, 0.0f, 0.0f); // 3 cm in global X
+            Eigen::Matrix4f T0 = Eigen::Matrix4f::Identity();
+            T0.block<3,1>(0,3) = offsetp;
+
+            // Offset from rotation axis (-3 cm along X)
+            Eigen::Vector3f offsetn(-0.03f, 0.0f, 0.0f); // 3 cm in global X
+            Eigen::Matrix4f T2 = Eigen::Matrix4f::Identity();
+            T2.block<3,1>(0,3) = offsetn;
+
+
+            // Build 4x4 homogeneous transform
+            Eigen::Matrix4f transform = T1*T0;
 
             return transform;
-        };
+        }
+
 
         // Publishers
         rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr ang_pub_;
@@ -173,6 +200,10 @@ class PointCloudBlender : public rclcpp:: Node{
         int dirFlag;
         bool captFlag;
         int initFlag;
+
+        int offsetAng;
+        int dAng;
+        int prevAng;
 
         // Timer
         rclcpp::TimerBase::SharedPtr timer_;
