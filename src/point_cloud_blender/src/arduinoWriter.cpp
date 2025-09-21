@@ -34,7 +34,7 @@ class ArduinoSerialNode : public rclcpp::Node{
   }
 
   private:
-    void sendToArduino(const std_msgs::msg::Int32::SharedPtr &msg)
+    void sendToArduino(const std_msgs::msg::Int32::SharedPtr msg)
     {
       // Send to Arduino angle
       if (serial_.is_open()) {

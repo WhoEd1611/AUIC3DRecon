@@ -5,7 +5,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <SerialStream.h>
+#include <boost/asio.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -18,22 +18,21 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 using namespace std::chrono_literals;
-using namespace LibSerial;
 
 class ControlBlender : public rclcpp:: Node{
     public:
         ControlBlender()
-        : Node("pc_blender")
+        : Node("pc_blender"), serial_(io_)
         {            
             // Init arduino communication
             try {
-                SerialStream serial_port( "/dev/ttyACM0" ) ;                
-                serial_port.SetBaudRate(BaudRate::BAUD_9600);
+                serial_.open("/dev/ttyACM0");
+                serial_.set_option(boost::asio::serial_port_base::baud_rate(9600));
             }
-            catch (const OpenFailed&) 
+            catch (boost::system::system_error &e) 
             {
                 RCLCPP_ERROR(this->get_logger(), "Could not open serial port: %s", e.what());
-                rclcpp::shutdown();
+                return;
             }
 
             
@@ -123,7 +122,7 @@ class ControlBlender : public rclcpp:: Node{
                 angle = angle + dirFlag * 30;
                 RCLCPP_INFO(this->get_logger(), "Angle: %d", angle);
                 
-                serial_port << std::to_string(angle) << "\n" << std::flush;
+                boost::asio::write(serial_, boost::asio::buffer(&angle, sizeof(angle)));
                 RCLCPP_INFO(this->get_logger(), "Arduino messaged");
 
                 // // Wait for reply from Arduino
@@ -205,7 +204,8 @@ class ControlBlender : public rclcpp:: Node{
         rclcpp::TimerBase::SharedPtr timer_;
 
         // Serial
-        SerialStream serial_port;
+        boost::asio::io_service io_;
+        boost::asio::serial_port serial_;
 
         // Constant
         int angle;
@@ -221,7 +221,13 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<ControlBlender>();
-    rclcpp::spin(node);
+    
+    rclcpp::executors::MultiThreadedExecutor executor;
+    executor.add_node(node);
+    
+    executor.spin();
+    executor.remove_node(node);
+    node.reset();  // destroy shared_ptr
     rclcpp::shutdown();
     return 0;
 }
