@@ -94,7 +94,7 @@ class PointCloudBlender : public rclcpp:: Node{
 
                     pcl::PointCloud<pcl::PointXYZ>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZ>); // temp filtered cloud
                     voxel.filter(*filterCloud);
-                    memoryCloud = filterCloud; // Replace with new cloud
+                    *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
                 }
 
