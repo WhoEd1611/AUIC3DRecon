@@ -126,7 +126,7 @@ class PointCloudBlender : public rclcpp:: Node{
             auto message = sensor_msgs::msg::PointCloud2();
             pcl::toROSMsg(*memoryCloud, message);
             message.header.stamp = this->now();       // sets consistent timestamp
-            message.header.frame_id = "map"; 
+            message.header.frame_id = "camera_link"; 
             RCLCPP_INFO(this->get_logger(), "Cloud sent");
             pc_pub_->publish(message);
         }
