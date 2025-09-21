@@ -85,7 +85,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
 
                     // Add new point cloud to old point cloud
-                    *memoryCloud += *trans_cloud;
+                    *memoryCloud = *memoryCloud + *trans_cloud;
 
                     // Filter cloud
                     pcl::VoxelGrid<pcl::PointXYZ> voxel;
