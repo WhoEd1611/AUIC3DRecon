@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'point_cloud_blend_python'
+package_name = 'arduino_serial'
 
 setup(
     name=package_name,
@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "serial_node = point_cloud_blend_python.arduinoWriter:main",
-            "rotation_node = point_cloud_blend_python.rotationTester:main"
+            "serial_node = arduino_serial.arduinoWriter:main",
+            "rotation_node = arduino_serial.rotationTester:main"
         ],
     },
 )

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>point_cloud_blend_python</name>
+  <name>arduino_serial</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="edriclay2002@outlook.com">edric</maintainer>
