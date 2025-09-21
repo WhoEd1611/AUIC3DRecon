@@ -7,6 +7,7 @@ int lastAngle = -1;
 void setup() {
   Serial.begin(9600);
   myServo.attach(servoPin);
+  myServo.write(0);
 }
 
 void loop() {
@@ -19,6 +20,7 @@ void loop() {
     if (angle != lastAngle) {
       myServo.write(angle);
       lastAngle = angle;
+      Serial.println("CMD: 1");
     }
   }
 }

@@ -20,6 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "serial_node = point_cloud_blend_python.arduinoWriter:main",
+            "rotation_node = point_cloud_blend_python.rotationTester:main"
         ],
     },
 )
