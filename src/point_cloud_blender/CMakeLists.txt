@@ -14,18 +14,26 @@ find_package(pcl_conversions REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system filesystem thread)
-find_package(PCL REQUIRED COMPONENTS common filters)
+find_package(PCL REQUIRED COMPONENTS common filters registration)
 
 add_executable(pointCloudBlender src/pointCloudBlender.cpp)
 ament_target_dependencies(pointCloudBlender rclcpp std_msgs sensor_msgs message_filters pcl_conversions Eigen3)
 target_link_libraries(pointCloudBlender
   ${PCL_LIBRARIES}
 )
+
+add_executable(icpBlender src/pointCloudBlender.cpp)
+ament_target_dependencies(icpBlender rclcpp std_msgs sensor_msgs message_filters pcl_conversions Eigen3)
+target_link_libraries(icpBlender
+  ${PCL_LIBRARIES}
+)
+
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 install(TARGETS
   pointCloudBlender
+  icpBlender
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
 class PointCloudBlender : public rclcpp:: Node{
     public:
         PointCloudBlender()
-        : Node("pc_blender")
+        : Node("icp_blender")
         {            
             // Init pub
             ang_pub_ = this->create_publisher<std_msgs::msg::Int32>("angle", 10);
