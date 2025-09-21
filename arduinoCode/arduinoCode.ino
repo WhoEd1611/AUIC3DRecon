@@ -20,6 +20,7 @@ void loop() {
     if (angle != lastAngle) {
       myServo.write(angle);
       lastAngle = angle;
+      delay(1000);
       Serial.println("CMD: 1");
     }
   }
