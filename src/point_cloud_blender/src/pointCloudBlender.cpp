@@ -94,6 +94,7 @@ class PointCloudBlender : public rclcpp:: Node{
 
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
                     voxel.filter(*filterCloud);
+
                     *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
                 }
@@ -149,7 +150,7 @@ class PointCloudBlender : public rclcpp:: Node{
                 sin(gamma), cos(gamma), 0,
                 0, 0, 1;
 
-            Eigen::Matrix3f R = R1 * R2;
+            Eigen::Matrix3f R = R2 * R1;
             
             // Get transform matrix
             Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
