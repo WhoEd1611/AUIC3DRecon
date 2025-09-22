@@ -4,6 +4,25 @@
 Created by: Edric Lay
 Date Created: 17/09/25
 
-Notes:
-Open3D has a method for combining point clouds
-PCL does as well
+## To use:
+### Hardware
+- Plug arduino into PC via USB
+- Plug servo signal wire into Pin 9 and ensure servo is powered
+- Hit reset button on arduino to zero
+
+### Terminal one:
+'''
+sudo chmod a+rw /dev/ttyACM0
+ros2 run arduino_serial serial_node
+'''
+
+### Terminal two:
+'''
+ros2 run point_cloud_blender icpBlender
+'''
+
+### Terminal three:
+'''
+rviz2
+'''
+Load the config called d435.rviz
