@@ -1,0 +1,16 @@
+[StartTime]
+camera mount-Static 2.MFC=2s
+[SolverState]
+camera mount-Static 2.MFC=2
+[MainFrame]
+camera mount-Static 2.MFC=MCAAAAAAAAAAAAAABAAAAAAAPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPMECAAAAAHEBAAAAAELDAAAAAKBCAAAAA
+[ShowMin]
+camera mount-Static 2.MFC=No
+[SolverType]
+camera mount-Static 2.MFC=Linear Analysis
+[StudyType]
+camera mount-Static 2.MFC=0
+[StudyName]
+camera mount-Static 2.MFC=Static 2
+[Solver]
+camera mount-Static 2.MFC=Iterative

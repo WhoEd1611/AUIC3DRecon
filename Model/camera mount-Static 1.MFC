@@ -1,0 +1,16 @@
+[StartTime]
+camera mount-Static 1.MFC=41s
+[SolverState]
+camera mount-Static 1.MFC=2
+[MainFrame]
+camera mount-Static 1.MFC=MCAAAAAAAAAAAAAACAAAAAAAAADIPPPPAADIPPPPPPPPPPPPPPPPPPPPMECAAAAAHEBAAAAAELDAAAAAKBCAAAAA
+[ShowMin]
+camera mount-Static 1.MFC=No
+[SolverType]
+camera mount-Static 1.MFC=Linear Analysis
+[StudyType]
+camera mount-Static 1.MFC=0
+[StudyName]
+camera mount-Static 1.MFC=Static 1
+[Solver]
+camera mount-Static 1.MFC=Sparse
