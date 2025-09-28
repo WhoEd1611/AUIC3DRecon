@@ -51,19 +51,19 @@ class ImageStitcherNode(Node):
         height = cam_msg.height
         intrinsic = cam_msg.k
         fx = intrinsic[0]
-        hfov = 2 * np.rad2deg(np.arctan(width/(2*fx)))
+        self.hfov = 2 * np.rad2deg(np.arctan(width/(2*fx)))
 
         # Check if full hfov >= 360
-        full_hfov = sweep + hfov
+        full_hfov = sweep + self.hfov
 
         if full_hfov >= 360:        
             # Determine stitch image size
-            pan_width = width * (360/hfov)
+            pan_width = width * (360/self.hfov)
             self.stitchedImage = np.zeros((pan_width, height, 3))
         
         else:
             # Determine stitch image size
-            pan_width = width * (1 + sweep/hfov)
+            pan_width = width * (1 + sweep/self.hfov)
             self.stitchedImage = np.zeros((pan_width, height, 3))
         
         del self.cam_sub
