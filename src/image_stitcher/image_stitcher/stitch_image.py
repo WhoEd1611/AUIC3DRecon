@@ -37,9 +37,13 @@ class ImageStitcherNode(Node):
 
         # Other
         self.br = CvBridge()
+        self.stitcher = cv2.Stitcher.create()
     
     def stitchCallback(self, RGBD_msg: Image, depth_msg: Image):
         self.get_logger().info('Receiving video frame')
+
+        status = False # Used to prevent failed stitches from being published
+        
 
         # Extract to cv2
         rgbFrame = self.br.imgmsg_to_cv2(RGBD_msg)
@@ -49,18 +53,28 @@ class ImageStitcherNode(Node):
         
         # Initial frame
         if not self.stitchedImage: # check if image is empty
+            status = True
             self.stitchedImage = filteredFrame
 
         # Other frame
         else:
+            imgs = [self.stitchedImage, filteredFrame]
             # Two conditions:
+            notReplace = True
+
             # Doesn't need to replace image
-            if True:
-                pass
-            # Does need to replace image
+            if notReplace:
+                status, stitchedImage = self.stitcher.stitch(imgs)
+                if status:
+                    self.stitchedImage = stitchedImage
+                else:
+                    self.get_logger().info('Issue with image stitching')
+
+            # Does need to replace image + PCL
             else:
                 pass
 
+        # Always publish stitched image
         self.stitch_pub.publish(self.stitchedImage)
 
     def filterImage(self, RGB_image, depth_image):
