@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "stitch_node = image_stitcher.stitch_image:main"
         ],
     },
 )

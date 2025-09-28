@@ -26,7 +26,7 @@ class ImageStitcherNode(Node):
         self.rgb_sub = Subscriber(self, Image, "camera/camera/aligned_depth_to_color/image_raw") # Reads the depth aligned images
         self.depth_sub = Subscriber(self, Image, "camera/camera/depth/image_rect_raw") # Reads the depth images
         self.angle_sub = Subscriber(self, Int32, "angle") # Reads the current image angle
-        self.cam_sub = self.create_subscription(CameraInfo, "/camera/camera/aligned_depth_to_color/camera_info", 10, self.setStitchedImageSize) # Reads the camera intrinsics
+        self.cam_sub = self.create_subscription(CameraInfo, "/camera/camera/aligned_depth_to_color/camera_info", self.setStitchedImageSize, 10) # Reads the camera intrinsics
 
         self.ats = ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub, self.angle_sub], 10, 0.1)
         self.ats.registerCallback(self.stitchCallback)
