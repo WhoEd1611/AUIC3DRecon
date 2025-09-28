@@ -45,27 +45,27 @@ class ImageStitcherNode(Node):
     
     def setStitchedImageSize(self, cam_msg: CameraInfo):
         # Determine how much camera sweeps
-        sweep = self.get_parameter("sweep_range").get_parameter_value().integer_value
+        self.sweep = self.get_parameter("sweep_range").get_parameter_value().integer_value
 
         # Determine hfov
-        width = cam_msg.width
-        height = cam_msg.height
-        intrinsic = cam_msg.k
-        fx = intrinsic[0]
-        self.hfov = 2 * np.rad2deg(np.arctan(width/(2*fx)))
+        self.img_width = cam_msg.width
+        self.img_height = cam_msg.height
+        self.img_intrinsic = cam_msg.k
+        self.img_fx = self.img_intrinsic[0]
+        self.img_hfov = 2 * np.rad2deg(np.arctan(self.img_width/(2*self.img_fx)))
 
         # Check if full hfov >= 360
-        full_hfov = sweep + self.hfov
+        self.full_hfov = self.sweep + self.hfov
 
-        if full_hfov >= 360:        
+        if self.full_hfov >= 360:        
             # Determine stitch image size
-            pan_width = width * (360/self.hfov)
-            self.stitchedImage = np.zeros((pan_width, height, 3))
+            pan_width = self.img_width * (360/self.img_hfov)
+            self.stitchedImage = np.zeros((pan_width, self.img_height, 3))
         
         else:
             # Determine stitch image size
-            pan_width = width * (1 + sweep/self.hfov)
-            self.stitchedImage = np.zeros((pan_width, height, 3))
+            pan_width = self.img_width * (1 + self.sweep/self.hfov)
+            self.stitchedImage = np.zeros((pan_width, self.img_height, 3))
         
         del self.cam_sub
     
@@ -81,7 +81,7 @@ class ImageStitcherNode(Node):
         # Get angle data
         angle = angle_msg.data
 
-        filteredFrame = self.filterImage(rgbFrame, depthFrame)
+        filteredFrame = self.filterImage(rgbFrame, depthFrame) # Filters image to remove far objects
         imgs = [self.stitchedImage, filteredFrame]
         
         # Checks to see if anything has changed in the image to see if need to update pcl
@@ -117,9 +117,24 @@ class ImageStitcherNode(Node):
         return filtered
     
     def compareFrame(self, image_frame, angle):
-        # Step 1: Extract from self.stitchedImage equivalent image
+        if self.full_hfov < 360:
+            # Step 1: Extract from self.stitchedImage equivalent image
+            width = self.stitchedImage.shape[0]
+            centre = (width-self.img_width) * angle/self.sweep
+            old_image = self.stitchedImage[centre-self.img_width/2:centre+self.img_width/2+1,:,:]
+        
+        else:
+            pass
 
         # Step 2: Compare two images
+        can_old = cv2.Canny(old_image, 100, 200)
+        can_new = cv2.Canny(image_frame, 100, 200)
 
-        diff = False
-        return diff
+        diff = cv2.subtract(can_new, can_old)
+        pix_diff_count = cv2.countNonZero(diff)
+        self.get_logger().info(f"Difference in pixel count: {pix_diff_count}")
+
+        if pix_diff_count > 0.05 * self.img_width * self.img_height: # Pass some minimum threshold of difference
+            return True
+        else:
+            return False
