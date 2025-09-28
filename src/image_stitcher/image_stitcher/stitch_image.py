@@ -13,4 +13,9 @@ class ImageStitcherNode(Node):
 
         # Publishers
         self.stitch_pub = self.create_publisher(Image, "stitched_Image") # Publishes the final stitched image
+
+        # Data
+        self.stitched_Image = None
     
+    def stitchCallback(self, RGBD_msg):
+        self.stitch_pub.publish(self.stitched_Image)
