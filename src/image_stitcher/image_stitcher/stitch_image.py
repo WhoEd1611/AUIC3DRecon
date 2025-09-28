@@ -138,3 +138,12 @@ class ImageStitcherNode(Node):
             return True
         else:
             return False
+        
+def main(args = None):
+    rclpy.init(args=args)
+    node = ImageStitcherNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+if __name__=="__main__":
+    main()
