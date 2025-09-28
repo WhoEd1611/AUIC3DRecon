@@ -9,7 +9,8 @@ class ImageStitcherNode(Node):
         super().__init__("image_stitcher")
 
         # Subscribers
-        self.rgb_sub = self.create_subscription(Image, "camera/camera/aligned_depth_to_color/image_raw") # Reads the depth aligned images
+        self.rgb_sub = self.create_subscription(Image, "camera/camera/aligned_depth_to_color/image_raw", self.stitchCallback) # Reads the depth aligned images
 
         # Publishers
         self.stitch_pub = self.create_publisher(Image, "stitched_Image") # Publishes the final stitched image
+    
