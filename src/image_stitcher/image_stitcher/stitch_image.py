@@ -53,12 +53,17 @@ class ImageStitcherNode(Node):
 
         # Other frame
         else:
-            pass
+            # Two conditions:
+            # Doesn't need to replace image
+            if True:
+                pass
+            # Does need to replace image
+            else:
+                pass
 
         self.stitch_pub.publish(self.stitchedImage)
 
     def filterImage(self, RGB_image, depth_image):
-    
         # Filter using numpy
         depthRGB = depth_image[:, :, None]
         filtered = np.where(depthRGB>self.maxDist, RGB_image, [0,0,0])
