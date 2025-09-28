@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String, Header, Int32
-from sensor_msgs.msg import Image, JointState
+from sensor_msgs.msg import Image, JointState, CameraInfo
 
 from message_filters import ApproximateTimeSynchronizer, Subscriber
 
@@ -17,6 +17,7 @@ class ImageStitcherNode(Node):
 
         # Parameters
         self.declare_parameter('max_distance', 0.8)
+        self.declare_parameter('sweep_range', 180)
 
         # Subscribers
         # self.rgb_sub = self.create_subscription(Image, "camera/camera/aligned_depth_to_color/image_raw", self.stitchCallback, 10) # Reads the depth aligned images
@@ -24,6 +25,7 @@ class ImageStitcherNode(Node):
 
         self.rgb_sub = Subscriber(Image, "camera/camera/aligned_depth_to_color/image_raw") # Reads the depth aligned images
         self.depth_sub = Subscriber(Image, "camera/camera/depth/image_rect_raw") # Reads the depth images
+        self.cam_sub = self.create_subscription(CameraInfo, "/camera/camera/aligned_depth_to_color/camera_info", self.setStitchedImageSize)
 
         self.ats = ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub], 10, 0.1)
         self.ats.registerCallback(self.stitchCallback)
@@ -39,6 +41,32 @@ class ImageStitcherNode(Node):
         # Other
         self.br = CvBridge()
         self.stitcher = cv2.Stitcher.create()
+    
+    def setStitchedImageSize(self, cam_msg: CameraInfo):
+        # Determine how much camera sweeps
+        sweep = self.get_parameter("sweep_range").get_parameter_value().integer_value
+
+        # Determine hfov
+        width = cam_msg.width
+        height = cam_msg.height
+        intrinsic = cam_msg.k
+        fx = intrinsic[0]
+        hfov = 2 * np.rad2deg(np.arctan(width/(2*fx)))
+
+        # Check if full hfov >= 360
+        full_hfov = sweep + hfov
+
+        if full_hfov >= 360:        
+            # Determine stitch image size
+            pan_width = width * (360/hfov)
+            self.stitchedImage = np.zeros((pan_width, height, 3))
+        
+        else:
+            # Determine stitch image size
+            pan_width = width * (1 + sweep/hfov)
+            self.stitchedImage = np.zeros((pan_width, height, 3))
+        
+        del self.cam_sub
     
     def stitchCallback(self, RGBD_msg: Image, depth_msg: Image):
         self.get_logger().info('Receiving video frame')
