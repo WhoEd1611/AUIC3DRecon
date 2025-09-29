@@ -88,8 +88,8 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Transform new point cloud
                     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
                     pcl::PointCloud<pcl::PointXYZRGB> cloud_aligned;
-                    icp.setInputSource(cloud);
-                    icp.setInputTarget(memoryCloud);
+                    icp.setInputSource(memoryCloud);
+                    icp.setInputTarget(cloud);
 
                     icp.align(cloud_aligned);
 
@@ -110,7 +110,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Voxel Filter cloud
                     pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
                     voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 1cm voxels
+                    voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 1cm voxels
 
                     voxel.filter(*filterCloud);
 
