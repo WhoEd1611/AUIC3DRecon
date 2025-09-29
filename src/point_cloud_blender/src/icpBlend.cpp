@@ -90,8 +90,7 @@ class PointCloudBlender : public rclcpp:: Node{
                     icp.setInputSource(cloud);
                     icp.setInputTarget(memoryCloud);
 
-                    pcl::PointCloud<pcl::PointXYZRGB> cloud_aligned;
-                    icp.align(cloud_aligned);
+                    icp.align(*trans_cloud);
 
                     // Add new point cloud to old point cloud
                     *memoryCloud = *memoryCloud + *trans_cloud;
