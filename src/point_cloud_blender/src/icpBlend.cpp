@@ -87,13 +87,14 @@ class PointCloudBlender : public rclcpp:: Node{
                 {
                     // Transform new point cloud
                     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+                    pcl::PointCloud<pcl::PointXYZRGB> cloud_aligned;
                     icp.setInputSource(cloud);
                     icp.setInputTarget(memoryCloud);
 
-                    icp.align(*trans_cloud);
+                    icp.align(cloud_aligned);
 
                     // Add new point cloud to old point cloud
-                    *memoryCloud = *memoryCloud + *trans_cloud;
+                    *memoryCloud = *memoryCloud + cloud_aligned;
 
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
 
