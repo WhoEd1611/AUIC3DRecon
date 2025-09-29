@@ -26,3 +26,9 @@ ros2 run point_cloud_blender icpBlender
 rviz2
 '''
 Load the config called d435.rviz
+
+### Terminal four:
+'''
+ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true
+'''
+Load the point cloud camera
