@@ -15,12 +15,23 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/registration/icp.h>
+#include <pcl/registration/transformation_estimation_2D.h>
 
 #include <Eigen/Dense>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
 using namespace std::chrono_literals;
+
+// Hash function for std::pair<int,int>
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator()(const std::pair<T1, T2> &p) const {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+        return h1 ^ (h2 << 1);  // combine the two hashes
+    }
+};
 
 class PointCloudBlender : public rclcpp:: Node{
     public:
@@ -36,17 +47,33 @@ class PointCloudBlender : public rclcpp:: Node{
             pc_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>("camera/camera/depth/color/points", 10, std::bind(&PointCloudBlender::updatePCL, this, _1));
 
             // Init timer
-            timer_ = this->create_wall_timer(1s, std::bind(&PointCloudBlender::publishCloud, this));
+            // timer_ = this->create_wall_timer(1s, std::bind(&PointCloudBlender::publishCloud, this));
 
             // Init direction, angle and point cloud
             dirFlag = 1;
             angle = 0;
-            captFlag = true;
+            captFlag = false;
             memoryCloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
             initFlag = true;
-            offsetAng = 45;
+            offsetAng = 0;
             dAng = 30;
             prevAng = 0;
+            // if (!t_matrix.allFinite()) {
+            //     RCLCPP_ERROR(this->get_logger(), "ICP transformation contains NaN/Inf!");
+            // } 
+            // else 
+            // {
+            //     RCLCPP_INFO(this->get_logger(), "ICP transformation matrix:");
+            //     RCLCPP_INFO(this->get_logger(), 
+            //                 "[%f, %f, %f, %f]\n"
+            //                 "[%f, %f, %f, %f]\n"
+            //                 "[%f, %f, %f, %f]\n"
+            //                 "[%f, %f, %f, %f]",
+            //                 t_matrix(0,0), t_matrix(0,1), t_matrix(0,2), t_matrix(0,3),
+            //                 t_matrix(1,0), t_matrix(1,1), t_matrix(1,2), t_matrix(1,3),
+            //                 t_matrix(2,0), t_matrix(2,1), t_matrix(2,2), t_matrix(2,3),
+            //                 t_matrix(3,0), t_matrix(3,1), t_matrix(3,2), t_matrix(3,3));
+            // }
 
             // Init publish angle to force rotation there
             this->publishAngle();
@@ -73,49 +100,114 @@ class PointCloudBlender : public rclcpp:: Node{
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
                 pcl::fromROSMsg(*pc_msg, *cloud);
 
+                // Clean pcl
+                std::vector<int> indices;  // Not used
+                pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
+                // pcl::transformPointCloud(*cloud, *cloud, t_matrix);
+                
+                // Voxel Filter cloud
+                pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
+                voxel.setInputCloud(cloud);
+                voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 1cm voxels
+                voxel.filter(*cloud);
+
+                // Radius Outlier Removal
+                pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
+                ror.setInputCloud(cloud);
+                ror.setRadiusSearch(0.001);   // 1 mm radius
+                ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
+                ror.filter(*cloud);
+
                 if (initFlag){
-                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
-                    RCLCPP_INFO(this->get_logger(), "PC Initialised");
-                    Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, 0);
-                    pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
                     // Default as first cloud
-                    *memoryCloud = *trans_cloud;
+                    // pcl::transformPointCloud(*cloud, *cloud, t_matrix);
+                    *memoryCloud = *cloud;
                     initFlag = false;
+                    RCLCPP_INFO(this->get_logger(), "PCL Initialised");
                 }
 
                 else
                 {
                     // Transform new point cloud
                     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-                    pcl::PointCloud<pcl::PointXYZRGB> cloud_aligned;
+                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_aligned = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
                     icp.setInputSource(cloud);
                     icp.setInputTarget(memoryCloud);
 
-                    icp.align(cloud_aligned);
+                    // // ICP parameters
+                    // icp.setMaxCorrespondenceDistance(1);
+                    // icp.setMaximumIterations(50);
+                    // icp.setTransformationEpsilon(1e-8);
+                    // icp.setEuclideanFitnessEpsilon(1e-6);
+
+                    // icp.align(*cloud_aligned, t_matrix);
+                    icp.align(*cloud_aligned);
+
+
+                    if (icp.hasConverged()) {
+                        RCLCPP_INFO(this->get_logger(), "ICP converged!");
+                        RCLCPP_INFO(this->get_logger(), "Fitness score: %f", icp.getFitnessScore());
+                    } else {
+                        RCLCPP_WARN(this->get_logger(), "ICP did NOT converge.");                    
+                    }
 
                     // Add new point cloud to old point cloud
-                    *memoryCloud = *memoryCloud + cloud_aligned;
+                    *memoryCloud = *memoryCloud + *cloud_aligned;
+                    // *memoryCloud = *memoryCloud + *cloud;
+
 
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
 
+                    // Voxel Filter cloud
+                    pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
+                    voxel.setInputCloud(memoryCloud);
+                    voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 1cm voxels
+                    voxel.filter(*filterCloud);
 
                     // Radius Outlier Removal
                     pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
-                    ror.setInputCloud(memoryCloud);
+                    ror.setInputCloud(filterCloud);
                     ror.setRadiusSearch(0.001);   // 1 mm radius
                     ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
                     ror.filter(*filterCloud);
 
-                    // // Voxel Filter cloud
-                    // pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
-                    // voxel.setInputCloud(memoryCloud);
-                    // voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 1cm voxels
 
-                    // voxel.filter(*filterCloud);
+                    // // Custom filter method to keep 2.5D
+                    // float grid_size = 0.001f; // 1 mm grid
+                    // std::unordered_map<std::pair<int,int>, pcl::PointXYZRGB, pair_hash> grid;
 
-                    *memoryCloud = *filterCloud; // Replace with new cloud
+                    // for (const auto &p : cloud_aligned->points) {
+                    //     int gx = static_cast<int>(p.x / grid_size);
+                    //     int gy = static_cast<int>(p.y / grid_size);
+                    //     std::pair<int,int> key = {gx, gy};
+                    //     if (grid.find(key) == grid.end()) {
+                    //         grid[key] = p; // keep first point in this cell
+                    //     }
+                    // }
+                    
+                    // for (auto &kv : grid) filterCloud->points.push_back(kv.second); // Convert back to point cloud
+    
+                    float threshold = 0.8f;
+                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_thresh(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+
+                    for (auto& p : *filterCloud) {
+                        float r = std::sqrt(p.x * p.x + p.y * p.y); // distance from origin in XY plane
+                        if (r <= threshold) {                       // keep points inside threshold
+                            cloud_thresh->points.emplace_back(p);
+                        }
+                    }
+
+                    cloud_thresh->width = cloud_thresh->points.size();
+                    cloud_thresh->height = 1;
+                    cloud_thresh->is_dense = true;
+
+                    *memoryCloud = *cloud_thresh; // Replace with new cloud
+                    pcl::removeNaNFromPointCloud(*memoryCloud, *memoryCloud, indices);
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
                 }
+
+                this->publishCloud();
 
                 // Update direction of rotation
                 if (angle >= 180){
@@ -127,15 +219,15 @@ class PointCloudBlender : public rclcpp:: Node{
                     prevAng = angle;
                     angle = angle + dAng;
                 }
+
                 // Send new angle to Arduino, needs to be blocking
                 this->publishAngle();
             }
-
-            // this->publishCloud();
         }
     
         void publishAngle()
         {
+            t_matrix = this->calcTransform(offsetAng, angle);
             auto message = std_msgs::msg::Int32();
             message.data = angle;
             RCLCPP_INFO(this->get_logger(), "Angle Published");
@@ -221,6 +313,7 @@ class PointCloudBlender : public rclcpp:: Node{
         int offsetAng;
         int dAng;
         int prevAng;
+        Eigen::Matrix4f t_matrix;
 
         // Timer
         rclcpp::TimerBase::SharedPtr timer_;
