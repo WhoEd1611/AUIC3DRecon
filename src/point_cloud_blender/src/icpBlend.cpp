@@ -132,6 +132,10 @@ class PointCloudBlender : public rclcpp:: Node{
                 captFlag = false;
             }
 
+            else {
+                RCLCPP_INFO(this->get_logger(), "Not capturing: " + captFlag);
+            }
+
             this->publishCloud();
         }
     
