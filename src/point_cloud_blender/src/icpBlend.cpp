@@ -13,6 +13,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/common/transforms.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/registration/icp.h>
 
 #include <Eigen/Dense>
@@ -95,13 +96,23 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Add new point cloud to old point cloud
                     *memoryCloud = *memoryCloud + *trans_cloud;
 
-                    // Filter cloud
-                    pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
-                    voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 5cm voxels
-
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
-                    voxel.filter(*filterCloud);
+
+
+                    // Radius Outlier Removal
+                    pcl::RadiusOutlierRemoval<pcl::PointXYZ> ror;
+                    ror.setInputCloud(memoryCloud);
+                    ror.setRadiusSearch(0.002);   // 2 mm radius
+                    ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
+                    ror.filter(*filterCloud);
+
+
+                    // // Voxel Filter cloud
+                    // pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
+                    // voxel.setInputCloud(memoryCloud);
+                    // voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 5cm voxels
+
+                    // voxel.filter(*filterCloud);
 
                     *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
