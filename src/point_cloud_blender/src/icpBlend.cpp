@@ -36,7 +36,7 @@ class PointCloudBlender : public rclcpp:: Node{
             pc_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>("camera/camera/depth/color/points", 10, std::bind(&PointCloudBlender::updatePCL, this, _1));
 
             // Init timer
-            timer_ = this->create_wall_timer(1s, std::bind(&PointCloudBlender::publishCloud, this));
+            // timer_ = this->create_wall_timer(1s, std::bind(&PointCloudBlender::publishCloud, this));
 
             // Init direction, angle and point cloud
             dirFlag = 1;
@@ -131,6 +131,8 @@ class PointCloudBlender : public rclcpp:: Node{
                 // Send new angle to Arduino, needs to be blocking
                 this->publishAngle();
             }
+
+            this->publishCloud();
         }
     
         void publishAngle()
