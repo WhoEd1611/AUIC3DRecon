@@ -22,7 +22,7 @@ target_link_libraries(pointCloudBlender
   ${PCL_LIBRARIES}
 )
 
-add_executable(icpBlender src/pointCloudBlender.cpp)
+add_executable(icpBlender src/icpBlend.cpp)
 ament_target_dependencies(icpBlender rclcpp std_msgs sensor_msgs message_filters pcl_conversions Eigen3)
 target_link_libraries(icpBlender
   ${PCL_LIBRARIES}
