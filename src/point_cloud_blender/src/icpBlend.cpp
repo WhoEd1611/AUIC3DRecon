@@ -99,20 +99,20 @@ class PointCloudBlender : public rclcpp:: Node{
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
 
 
-                    // Radius Outlier Removal
-                    pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
-                    ror.setInputCloud(memoryCloud);
-                    ror.setRadiusSearch(0.001);   // 1 mm radius
-                    ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
-                    ror.filter(*filterCloud);
+                    // // Radius Outlier Removal
+                    // pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
+                    // ror.setInputCloud(memoryCloud);
+                    // ror.setRadiusSearch(0.001);   // 1 mm radius
+                    // ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
+                    // ror.filter(*filterCloud);
 
 
-                    // // Voxel Filter cloud
-                    // pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
-                    // voxel.setInputCloud(memoryCloud);
-                    // voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 5cm voxels
+                    // Voxel Filter cloud
+                    pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
+                    voxel.setInputCloud(memoryCloud);
+                    voxel.setLeafSize(0.001f, 0.001f, 0.001f); // 1cm voxels
 
-                    // voxel.filter(*filterCloud);
+                    voxel.filter(*filterCloud);
 
                     *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
