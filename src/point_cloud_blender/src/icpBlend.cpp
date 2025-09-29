@@ -100,9 +100,9 @@ class PointCloudBlender : public rclcpp:: Node{
 
 
                     // Radius Outlier Removal
-                    pcl::RadiusOutlierRemoval<pcl::PointXYZ> ror;
+                    pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
                     ror.setInputCloud(memoryCloud);
-                    ror.setRadiusSearch(0.002);   // 2 mm radius
+                    ror.setRadiusSearch(0.001);   // 1 mm radius
                     ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
                     ror.filter(*filterCloud);
 
