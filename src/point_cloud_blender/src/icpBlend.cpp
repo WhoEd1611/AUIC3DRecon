@@ -88,8 +88,8 @@ class PointCloudBlender : public rclcpp:: Node{
                     // Transform new point cloud
                     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
                     pcl::PointCloud<pcl::PointXYZRGB> cloud_aligned;
-                    icp.setInputSource(memoryCloud);
-                    icp.setInputTarget(cloud);
+                    icp.setInputSource(cloud);
+                    icp.setInputTarget(memoryCloud);
 
                     icp.align(cloud_aligned);
 
