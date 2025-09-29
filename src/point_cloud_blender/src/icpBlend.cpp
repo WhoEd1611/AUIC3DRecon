@@ -66,7 +66,6 @@ class PointCloudBlender : public rclcpp:: Node{
         {
             if (captFlag) // Means only when we want to take photos will we update the PC
             {
-                captFlag = false;
                 RCLCPP_INFO(this->get_logger(), "PCL Received");
                 
                 // Get point cloud
@@ -130,6 +129,7 @@ class PointCloudBlender : public rclcpp:: Node{
                 }
                 // Send new angle to Arduino, needs to be blocking
                 this->publishAngle();
+                captFlag = false;
             }
 
             this->publishCloud();
