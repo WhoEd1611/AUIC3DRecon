@@ -72,9 +72,9 @@ class PointCloudBlender : public rclcpp:: Node{
                 // Get point cloud
                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
                 pcl::fromROSMsg(*pc_msg, *cloud);
-                pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
 
                 if (initFlag){
+                    pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
                     RCLCPP_INFO(this->get_logger(), "PC Initialised");
                     Eigen::Matrix4f t_matrix = this->calcTransform(offsetAng, 0);
                     pcl::transformPointCloud(*cloud, *trans_cloud, t_matrix);
@@ -99,20 +99,19 @@ class PointCloudBlender : public rclcpp:: Node{
                     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filterCloud(new pcl::PointCloud<pcl::PointXYZRGB>); // temp filtered cloud
 
 
-                    // // Radius Outlier Removal
-                    // pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
-                    // ror.setInputCloud(memoryCloud);
-                    // ror.setRadiusSearch(0.001);   // 1 mm radius
-                    // ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
-                    // ror.filter(*filterCloud);
+                    // Radius Outlier Removal
+                    pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> ror;
+                    ror.setInputCloud(memoryCloud);
+                    ror.setRadiusSearch(0.001);   // 1 mm radius
+                    ror.setMinNeighborsInRadius(1);  // keep if at least one neighbor
+                    ror.filter(*filterCloud);
 
+                    // // Voxel Filter cloud
+                    // pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
+                    // voxel.setInputCloud(memoryCloud);
+                    // voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 1cm voxels
 
-                    // Voxel Filter cloud
-                    pcl::VoxelGrid<pcl::PointXYZRGB> voxel;
-                    voxel.setInputCloud(memoryCloud);
-                    voxel.setLeafSize(0.01f, 0.01f, 0.01f); // 1cm voxels
-
-                    voxel.filter(*filterCloud);
+                    // voxel.filter(*filterCloud);
 
                     *memoryCloud = *filterCloud; // Replace with new cloud
                     RCLCPP_INFO(this->get_logger(), "Cloud updated");
