@@ -10,6 +10,8 @@ import cv2
 from cv_bridge import CvBridge
 
 import numpy as np
+from datetime import datetime
+
 
 class ImageStitcherNode(Node):
     def __init__(self):
@@ -18,6 +20,7 @@ class ImageStitcherNode(Node):
         # Parameters
         self.declare_parameter('max_distance', 0.8)
         self.declare_parameter('sweep_range', 180)
+        self.declare_parameter('save_image', False)
 
         # Subscribers
         # self.rgb_sub = self.create_subscription(Image, "camera/camera/aligned_depth_to_color/image_raw", self.stitchCallback, 10) # Reads the depth aligned images
@@ -38,10 +41,16 @@ class ImageStitcherNode(Node):
         # Data
         self.stitchedImage = None
         self.maxDist = self.get_parameter('max_distance').get_parameter_value().double_value
+        
+        # File string
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        self.folder = f"pic/{timestamp}/" # save to folder with this name
 
         # Other
         self.br = CvBridge()
         self.stitcher = cv2.Stitcher.create()
+        self.save = self.get_parameter('save_image').get_parameter_value().bool_value
     
     def setStitchedImageSize(self, cam_msg: CameraInfo):
         # Determine how much camera sweeps
@@ -117,6 +126,10 @@ class ImageStitcherNode(Node):
         return filtered
     
     def compareFrame(self, image_frame, angle):
+        curTime = self.get_clock().now()
+        sec, nsec = curTime.seconds_nanoseconds()
+        dir = self.folder + f"{sec}_{nsec}/"
+
         if self.full_hfov < 360:
             # Step 1: Extract from self.stitchedImage equivalent image
             width = self.stitchedImage.shape[0]
@@ -133,6 +146,14 @@ class ImageStitcherNode(Node):
         diff = cv2.subtract(can_new, can_old)
         pix_diff_count = cv2.countNonZero(diff)
         self.get_logger().info(f"Difference in pixel count: {pix_diff_count}")
+
+        if self.save:
+            cv2.imwrite(dir + "new.png", image_frame) # save new image
+            cv2.imwrite(dir + "full.png", self.stitchedImage) # save whole image
+            cv2.imwrite(dir + "extract.png", old_image) # save extracted image
+            cv2.imwrite(dir + "can_old.png", can_old) # save canny old
+            cv2.imwrite(dir + "can_new.png", can_new) # save canny new
+            cv2.imwrite(dir + "diff.png", diff) # save diff
 
         if pix_diff_count > 0.05 * self.img_width * self.img_height: # Pass some minimum threshold of difference
             return True
